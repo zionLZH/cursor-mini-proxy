@@ -1,0 +1,57 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Go（版本取自 go.mod）
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: 交叉编译多平台产物
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          for os in linux darwin windows; do
+            for arch in amd64 arm64; do
+              ext=""
+              if [ "$os" = "windows" ]; then
+                ext=".exe"
+              fi
+              out="dist/cursor-gateway-${os}-${arch}${ext}"
+              echo "==> 编译 $out"
+              CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" \
+                go build -trimpath -ldflags "-s -w" -o "$out" .
+            done
+          done
+          cd dist
+          sha256sum cursor-gateway-* > SHA256SUMS
+          echo "---- 产物清单 ----"
+          cat SHA256SUMS
+
+      - name: 上传构建产物（Actions Artifacts）
+        uses: actions/upload-artifact@v4
+        with:
+          name: cursor-gateway-dist
+          path: dist/*
+
+      - name: 发布 GitHub Release（仅标签触发）
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

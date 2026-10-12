@@ -1,0 +1,13 @@
+# === 凭据文件 ===
+# 运行时会自动生成的凭据缓存，含 API key 明文，严禁提交或分享
+gateway-credentials.json
+
+# === 编译产物 ===
+# 本平台构建输出（在本目录直接 go build / go run 生成）
+/cursor-gateway
+
+# 跨平台交叉编译输出（如 cursor-gateway-linux、cursor-gateway-mac、cursor-gateway-darwin-arm64 等）
+cursor-gateway-*
+
+# Windows 可执行文件（如 cursor-gateway.exe）
+*.exe
